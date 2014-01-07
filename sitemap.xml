@@ -1,0 +1,15 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<urlset xmlns='http://www.sitemaps.org/schemas/sitemap/0.9'>
+    <url>
+        <loc>http://lima-js.github.com/limajs/blog/</loc>
+        <lastmod>2014-01-07T16:32:32-05:00</lastmod>
+    </url>
+    <url>
+        <loc>http://lima-js.github.com/limajs/</loc>
+        <lastmod>2014-01-07T16:32:32-05:00</lastmod>
+    </url>
+    <url>
+        <loc>http://lima-js.github.com/limajs/robots.txt</loc>
+        <lastmod>2014-01-07T16:32:32-05:00</lastmod>
+    </url>
+</urlset>
