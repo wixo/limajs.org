@@ -34,24 +34,13 @@ const replaceSocialIcons = container => {
   });
 };
 
-const meetupDateFromMarkdown = markdown => {
-  if (markdown.split('\n')[0].includes('###')) {
-    limaJS.month = +markdown.split('\n')[0].split(' ')[1];
-    limaJS.day = +markdown.split('\n')[1].split(' ')[1];
-    const [, , ...markdownWithoutDate] = markdown.split('\n');
-    document.querySelector('a.add-to-calendar').classList.remove('hidden');
-    return markdownWithoutDate.join('\n');
-  }
-  return markdown;
-};
-
-const buildSchedule = container => {
-  return fetch('./SCHEDULE.md')
-    .then(response => response.text())
-    .then(markdown => {
-      container.innerHTML += snarkdown(meetupDateFromMarkdown(markdown));
-    });
-};
+const fetchEvents = () => new Promise((resolve, reject) => {
+  const callbackId = `__callback_${Date.now()}`;
+  window[callbackId] = resolve;
+  const script = document.createElement('script');
+  script.src = `https://api.meetup.com/LimaJS/events?callback=${callbackId}`;
+  document.body.appendChild(script);
+});
 
 const buildSponsors = container => {
   fetch('./SPONSORS.md')
@@ -86,13 +75,63 @@ const addToCalendarLink = container => {
   container.setAttribute('href', link);
 };
 
+const buildGoogleCalendarURL = (meetup) => {
+  const baseURL = 'https://calendar.google.com/calendar/r/eventedit';
+  const startDateTime = formatDateTimeToGCalendar(new Date(meetup.time));
+  const endDateTime = formatDateTimeToGCalendar(new Date(meetup.time + meetup.duration));
+  return `${baseURL}?text=${meetup.name}&dates=${startDateTime}/${endDateTime}`
+};
+
+const NextEvent = (meetup) => `
+  <h3><a href="${meetup.link}">${meetup.name}</a></h3>
+  <p>
+    📅 ${(new Date(meetup.time)).toLocaleString('es-PE').slice(0, -3)}<br />
+    📍 ${meetup.venue.name}
+  <p>
+  <p>${meetup.description}</p>
+  <p>
+    <a class="button add-to-calendar" href="${buildGoogleCalendarURL(meetup)}">
+      <span>Agregar a Calendario</span>
+    </a>
+  </p>
+`;
+
+
+const FutureEvents = (meetups) => `
+  <h2 class="section-title">Eventos futuros</h3>
+  ${meetups.map(meetup => `
+    <div>
+      <a href="${meetup.link}">
+        ${(new Date(meetup.time)).toLocaleDateString('es-PE')}
+        ${meetup.name}
+        @ ${meetup.venue.name}
+      </a>
+    </div>
+  `).join('\n')}
+`;
+
+const PastEvents = (meetups) => `
+  <a href="https://www.meetup.com/LimaJS/events/past/">Ver eventos pasados en meetup.com</a>
+`;
+
+const renderEvents = (container, meetups) => {
+  const [next, ...rest] = meetups;
+  container.innerHTML = `
+    ${NextEvent(next)}
+    <hr />
+    ${FutureEvents(rest.slice(0, 3))}
+    <hr />
+    ${PastEvents()}
+  `;
+};
+
 const main = () => {
   replaceSocialIcons(document.querySelector('section.social'));
-  buildSchedule(document.querySelector('div.LimaJS-schedule')).then(() => {
-    addToCalendarLink(document.querySelector('a.add-to-calendar'));
-  });
   buildSponsors(document.querySelector('div.sponsors'));
   colorLogo();
+  fetchEvents()
+    .then(({ data }) => renderEvents(document.querySelector('div.LimaJS-schedule'), data))
+    .catch(err => alert(`Error cargando datos de meetup.com.\n${err.message}`));
 };
 
 window.addEventListener('load', main);

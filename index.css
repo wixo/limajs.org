@@ -37,6 +37,11 @@ body {
   color: #555;
 }
 
+p {
+  font-size: 2rem;
+  max-width: 60rem;
+}
+
 a {
   color: #333;
   text-decoration: none;
